@@ -1,41 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:carousel_slider/carousel_slider.dart';
 import 'nidaa_page.dart';
 import 'newsfeed_page.dart';
 import 'events_page.dart';
-
-void main() {
-  runApp(MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'حارتي',
-      theme: ThemeData(
-        primarySwatch: Colors.green,
-        scaffoldBackgroundColor: Color(0xFFF5F5DC), // لون بني فاتح
-        appBarTheme: const AppBarTheme(
-          color: Colors.white,
-          iconTheme: IconThemeData(color: Colors.green),
-          titleTextStyle: TextStyle(
-            color: Colors.green,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        floatingActionButtonTheme: const FloatingActionButtonThemeData(
-          backgroundColor: Colors.green,
-        ),
-      ),
-      home: HomePage(),
-    );
-  }
-}
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -45,44 +11,40 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final List<String> sections = [
-    "أخبار حارتي",
-    "نداء",
-    "أحداث",
-  ];
   int _currentIndex = 0;
   final PageController _pageController = PageController();
 
+  final List<BottomNavigationBarItem> _navBarItems = const [
+    BottomNavigationBarItem(
+      icon: Icon(Icons.newspaper),
+      label: "أخبار حارتي",
+    ),
+    BottomNavigationBarItem(
+      icon: Icon(Icons.campaign),
+      label: "نداء",
+    ),
+    BottomNavigationBarItem(
+      icon: Icon(Icons.event),
+      label: "أحداث",
+    ),
+  ];
+
+  final List<Widget> _pages = [
+    const NewsfeedPage(),
+    const NidaaPage(),
+    const EventsPage(),
+  ];
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: sections.asMap().entries.map((entry) {
-            int index = entry.key;
-            String section = entry.value;
-            return GestureDetector(
-              onTap: () {
-                setState(() {
-                  _currentIndex = index;
-                });
-                _pageController.jumpToPage(index);
-              },
-              child: Text(
-                section,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  decoration: _currentIndex == index ? TextDecoration.underline : TextDecoration.none,
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-        centerTitle: true,
-      ),
       body: PageView(
         controller: _pageController,
         onPageChanged: (index) {
@@ -90,11 +52,35 @@ class _HomePageState extends State<HomePage> {
             _currentIndex = index;
           });
         },
-        children: [
-          NewsfeedPage(),
-          NidaaPage(),
-          EventsPage(),
-        ],
+        children: _pages,
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.primary,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+            _pageController.jumpToPage(index);
+          },
+          backgroundColor: theme.colorScheme.primary,
+          selectedItemColor: theme.colorScheme.onPrimary,
+          unselectedItemColor: theme.colorScheme.onPrimary.withOpacity(0.6),
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
+          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal),
+          type: BottomNavigationBarType.fixed,
+          items: _navBarItems,
+        ),
       ),
     );
   }
