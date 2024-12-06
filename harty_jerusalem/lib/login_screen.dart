@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class LoginPage extends StatefulWidget {
@@ -18,6 +19,40 @@ class _LoginPageState extends State<LoginPage> {
     emailController.dispose();
     passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _login() async {
+    if (_formKey.currentState!.validate()) {
+      try {
+        // Sign in the user
+        await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: emailController.text.trim(),
+          password: passwordController.text.trim(),
+        );
+
+        // Navigate to home page or display success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('تم تسجيل الدخول بنجاح!')),
+        );
+        // Navigate to a different page after login
+        Navigator.pushReplacementNamed(context, '/home');
+      } on FirebaseAuthException catch (e) {
+        String message = 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.';
+        if (e.code == 'user-not-found') {
+          message = 'البريد الإلكتروني غير موجود';
+        } else if (e.code == 'wrong-password') {
+          message = 'كلمة المرور غير صحيحة';
+        } else if (e.code == 'invalid-credential') {
+          message = 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -67,7 +102,7 @@ class _LoginPageState extends State<LoginPage> {
                             labelText: 'البريد الإلكتروني',
                             border: OutlineInputBorder(),
                           ),
-                          autofillHints: const [AutofillHints.email],
+                          autofillHints: const [AutofillHints.username],
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'يرجى إدخال البريد الإلكتروني';
@@ -118,9 +153,7 @@ class _LoginPageState extends State<LoginPage> {
                           child: ElevatedButton(
                             onPressed: () {
                               if (_formKey.currentState!.validate()) {
-                                // Handle login logic here
-                              } else {
-                                // Display an error message if validation fails
+                                _login();
                               }
                             },
                             child: const Text('تسجيل الدخول'),
@@ -183,6 +216,38 @@ class _RegisterPageState extends State<RegisterPage> {
     confirmPasswordController.dispose();
     nameController.dispose();
     super.dispose();
+  }
+
+  Future<void> _register() async {
+    if (_formKey.currentState!.validate()) {
+      try {
+        // Register the user
+        await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          email: emailController.text.trim(),
+          password: passwordController.text.trim(),
+        );
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('تم إنشاء الحساب بنجاح!')),
+        );
+
+        // Navigate to the login page or home page
+        Navigator.pop(context);
+      } on FirebaseAuthException catch (e) {
+        String message = 'حدث خطأ ما';
+        if (e.code == 'email-already-in-use') {
+          message = 'البريد الإلكتروني مستخدم مسبقًا';
+        } else if (e.code == 'weak-password') {
+          message = 'كلمة المرور ضعيفة جدًا';
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -255,7 +320,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             }
                             return null;
                           },
-                          autofillHints: const [AutofillHints.email],
+                          autofillHints: const [AutofillHints.username],
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
@@ -286,7 +351,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             }
                             return null;
                           },
-                          autofillHints: const [AutofillHints.newPassword],
+                          autofillHints: const [AutofillHints.password],
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
@@ -317,6 +382,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             }
                             return null;
                           },
+                          autofillHints: const [AutofillHints.password],
                         ),
                         const SizedBox(height: 24),
                         SizedBox(
@@ -325,6 +391,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             onPressed: () {
                               if (_formKey.currentState!.validate()) {
                                 // Handle registration logic here
+                                _register();
                               }
                             },
                             child: const Text('إنشاء الحساب'),
