@@ -39,9 +39,3 @@ class LoginScreen extends StatelessWidget {
     );
   }
 }
-
-void main() {
-  runApp(MaterialApp(
-    home: LoginScreen(),
-  ));
-}
