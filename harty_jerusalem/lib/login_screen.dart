@@ -65,8 +65,20 @@ class _LoginPageState extends State<LoginPage> {
                           controller: emailController,
                           decoration: const InputDecoration(
                             labelText: 'البريد الإلكتروني',
+                            border: OutlineInputBorder(),
                           ),
                           autofillHints: const [AutofillHints.email],
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'يرجى إدخال البريد الإلكتروني';
+                            }
+                            if (!RegExp(
+                                    r'^[a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$')
+                                .hasMatch(value)) {
+                              return 'يرجى إدخال بريد إلكتروني صحيح';
+                            }
+                            return null;
+                          },
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
@@ -74,6 +86,7 @@ class _LoginPageState extends State<LoginPage> {
                           obscureText: _obscureText,
                           decoration: InputDecoration(
                             labelText: 'كلمة المرور',
+                            border: const OutlineInputBorder(),
                             suffixIcon: IconButton(
                               icon: Icon(
                                 _obscureText
@@ -89,13 +102,26 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                           autofillHints: const [AutofillHints.password],
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'يرجى إدخال كلمة المرور';
+                            }
+                            if (value.length < 6) {
+                              return 'يجب أن تكون كلمة المرور 6 أحرف على الأقل';
+                            }
+                            return null;
+                          },
                         ),
                         const SizedBox(height: 24),
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
                             onPressed: () {
-                              // Login action placeholder
+                              if (_formKey.currentState!.validate()) {
+                                // Handle login logic here
+                              } else {
+                                // Display an error message if validation fails
+                              }
                             },
                             child: const Text('تسجيل الدخول'),
                           ),
@@ -143,14 +169,18 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
   final TextEditingController nameController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _obscureText = true;
+  bool _obscureConfirmText = true;
 
   @override
   void dispose() {
     emailController.dispose();
     passwordController.dispose();
+    confirmPasswordController.dispose();
     nameController.dispose();
     super.dispose();
   }
@@ -258,11 +288,45 @@ class _RegisterPageState extends State<RegisterPage> {
                           },
                           autofillHints: const [AutofillHints.newPassword],
                         ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: confirmPasswordController,
+                          obscureText: _obscureConfirmText,
+                          decoration: InputDecoration(
+                            labelText: 'تأكيد كلمة المرور',
+                            border: const OutlineInputBorder(),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscureConfirmText
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscureConfirmText = !_obscureConfirmText;
+                                });
+                              },
+                            ),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'يرجى تأكيد كلمة المرور';
+                            }
+                            if (value != passwordController.text) {
+                              return 'كلمتا المرور غير متطابقتين';
+                            }
+                            return null;
+                          },
+                        ),
                         const SizedBox(height: 24),
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              if (_formKey.currentState!.validate()) {
+                                // Handle registration logic here
+                              }
+                            },
                             child: const Text('إنشاء الحساب'),
                           ),
                         ),

@@ -29,10 +29,19 @@ class MyApp extends StatelessWidget {
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: Colors.white,
+          fillColor: Colors.white, // Default background color
+          hoverColor: Colors.grey[200], // Background color when hovering
+          focusColor: Colors.teal[50], // Background color when focused
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
+            borderSide: BorderSide.none, // Removes default border
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: Colors.teal,
+              width: 2.0,
+            ),
           ),
           labelStyle: TextStyle(color: Colors.grey[800]),
         ),
