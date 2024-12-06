@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:harty_jerusalem/firebase_options.dart';
+import 'package:harty_jerusalem/personal_detail_form.dart';
 import 'login_screen.dart';
 
 void main() async {
@@ -73,7 +74,8 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (context) => const LoginPage(),
         '/login': (context) => const LoginPage(),
-        '/home': (context) => const LoginPage() //const HomePage(),
+        '/home': (context) => const LoginPage(), //const HomePage(),
+        '/personal-details': (context) => const PersonalDetailsForm(),
       },
     );
   }

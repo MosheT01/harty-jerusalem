@@ -39,6 +39,7 @@ dependencies:
   firebase_auth: ^5.3.4
   flutter_localizations:
     sdk: flutter
+  firebase_database: ^11.2.0
 
 dev_dependencies:
   flutter_test:

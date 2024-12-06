@@ -1,5 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:harty_jerusalem/personal_detail_form.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -25,31 +27,39 @@ class _LoginPageState extends State<LoginPage> {
     if (_formKey.currentState!.validate()) {
       try {
         // Sign in the user
-        await FirebaseAuth.instance.signInWithEmailAndPassword(
+        UserCredential userCredential =
+            await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: emailController.text.trim(),
           password: passwordController.text.trim(),
         );
 
-        // Navigate to home page or display success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تم تسجيل الدخول بنجاح!')),
-        );
-        // Navigate to a different page after login
-        Navigator.pushReplacementNamed(context, '/home');
+        String userId = userCredential.user!.uid;
+
+        // Check if it's the user's first login
+        DatabaseReference userRef =
+            FirebaseDatabase.instance.ref('users/$userId');
+        DataSnapshot snapshot = await userRef.child('firstLogin').get();
+
+        if (snapshot.exists && snapshot.value == true) {
+          // Navigate to the Personal Details Form
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (context) => const PersonalDetailsForm()),
+          );
+        } else {
+          // Navigate to the home page
+          Navigator.pushReplacementNamed(context, '/home');
+        }
       } on FirebaseAuthException catch (e) {
         String message = 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.';
         if (e.code == 'user-not-found') {
           message = 'البريد الإلكتروني غير موجود';
         } else if (e.code == 'wrong-password') {
           message = 'كلمة المرور غير صحيحة';
-        } else if (e.code == 'invalid-credential') {
-          message = 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
         }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text(message), backgroundColor: Colors.red),
         );
       }
     }
@@ -221,17 +231,28 @@ class _RegisterPageState extends State<RegisterPage> {
   Future<void> _register() async {
     if (_formKey.currentState!.validate()) {
       try {
-        // Register the user
-        await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        // Register the user with Firebase Auth
+        UserCredential userCredential =
+            await FirebaseAuth.instance.createUserWithEmailAndPassword(
           email: emailController.text.trim(),
           password: passwordController.text.trim(),
         );
+
+        String userId = userCredential.user!.uid;
+
+        // Write initial user data to Firebase Realtime Database
+        DatabaseReference userRef =
+            FirebaseDatabase.instance.ref('users/$userId');
+        await userRef.set({
+          'email': emailController.text.trim(),
+          'firstLogin': true, // Flag for first-time login
+        });
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('تم إنشاء الحساب بنجاح!')),
         );
 
-        // Navigate to the login page or home page
+        // Navigate back to login page
         Navigator.pop(context);
       } on FirebaseAuthException catch (e) {
         String message = 'حدث خطأ ما';
@@ -241,10 +262,7 @@ class _RegisterPageState extends State<RegisterPage> {
           message = 'كلمة المرور ضعيفة جدًا';
         }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text(message), backgroundColor: Colors.red),
         );
       }
     }
