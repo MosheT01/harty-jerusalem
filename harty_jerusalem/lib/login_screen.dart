@@ -108,6 +108,7 @@ class _LoginPageState extends State<LoginPage> {
                         const SizedBox(height: 32),
                         TextFormField(
                           controller: emailController,
+                          textDirection: TextDirection.ltr,
                           decoration: const InputDecoration(
                             labelText: 'البريد الإلكتروني',
                             border: OutlineInputBorder(),
@@ -309,6 +310,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     child: Column(
                       children: [
                         TextFormField(
+                          textDirection: TextDirection.ltr,
                           controller: emailController,
                           decoration: const InputDecoration(
                             labelText: 'البريد الإلكتروني',
@@ -328,6 +330,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         const SizedBox(height: 16),
                         TextFormField(
                           controller: passwordController,
+                          textDirection: TextDirection.ltr,
                           obscureText: _obscureText,
                           decoration: InputDecoration(
                             labelText: 'كلمة المرور',
@@ -359,6 +362,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         const SizedBox(height: 16),
                         TextFormField(
                           controller: confirmPasswordController,
+                          textDirection: TextDirection.ltr,
                           obscureText: _obscureConfirmText,
                           decoration: InputDecoration(
                             labelText: 'تأكيد كلمة المرور',
