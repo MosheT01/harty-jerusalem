@@ -25,3 +25,6 @@ doc/api/
 
 .flutter-plugins
 .flutter-plugins-dependencies
+harty_jerusalem/firebase.json
+harty_jerusalem/android/app/google-services.json
+harty_jerusalem/lib/firebase_options.dart
