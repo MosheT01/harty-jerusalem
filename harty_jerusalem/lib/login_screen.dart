@@ -204,7 +204,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController =
       TextEditingController();
-  final TextEditingController nameController = TextEditingController();
+
   final _formKey = GlobalKey<FormState>();
   bool _obscureText = true;
   bool _obscureConfirmText = true;
@@ -214,7 +214,7 @@ class _RegisterPageState extends State<RegisterPage> {
     emailController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
-    nameController.dispose();
+
     super.dispose();
   }
 
@@ -290,21 +290,6 @@ class _RegisterPageState extends State<RegisterPage> {
                   child: AutofillGroup(
                     child: Column(
                       children: [
-                        TextFormField(
-                          controller: nameController,
-                          decoration: const InputDecoration(
-                            labelText: 'الاسم الكامل',
-                            border: OutlineInputBorder(),
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'يرجى إدخال الاسم الكامل';
-                            }
-                            return null;
-                          },
-                          autofillHints: const [AutofillHints.name],
-                        ),
-                        const SizedBox(height: 16),
                         TextFormField(
                           controller: emailController,
                           decoration: const InputDecoration(
