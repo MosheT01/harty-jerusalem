@@ -108,7 +108,8 @@ class _NidaaPageState extends State<NidaaPage> {
                     try {
                       String userId = _auth.currentUser!.uid;
 
-                      DatabaseReference newCallRef = _database.child('calls').push();
+                      DatabaseReference newCallRef =
+                          _database.child('calls').push();
                       await newCallRef.set({
                         'name': name,
                         'phone': phone,
@@ -176,54 +177,142 @@ class _NidaaPageState extends State<NidaaPage> {
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('نداء'),
+        centerTitle: true,
+        backgroundColor: Colors.green,
+      ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: calls.length,
-              itemBuilder: (context, index) {
-                final call = calls[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                  child: ListTile(
-                    onTap: () => _viewCall(call),
-                    title: Text(call['name']!),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('رقم الهاتف: ${call['phone']}'),
-                        Text('وصف: ${call['description']}'),
-                        Text('درجة الاستعجال: ${call['urgency']}'),
-                      ],
-                    ),
-                    trailing: _auth.currentUser!.uid == call['userId']
-                        ? PopupMenuButton<String>(
-                            onSelected: (value) {
-                              if (value == 'mark_done') {
-                                _markCallAsDone(call);
-                              } else if (value == 'delete') {
-                                _deleteCall(call);
-                              }
-                            },
-                            itemBuilder: (context) => [
-                              const PopupMenuItem(
-                                value: 'mark_done',
-                                child: Text('تعليم كمكتمل'),
-                              ),
-                              const PopupMenuItem(
-                                value: 'delete',
-                                child: Text('حذف النداء'),
-                              ),
-                            ],
-                          )
-                        : null,
+          : calls.isEmpty
+              ? const Center(
+                  child: Text(
+                    'لا توجد نداءات حالياً',
+                    style: TextStyle(fontSize: 18, color: Colors.grey),
                   ),
-                );
-              },
-            ),
+                )
+              : ListView.builder(
+                  itemCount: calls.length,
+                  itemBuilder: (context, index) {
+                    final call = calls[index];
+                    return Card(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15.0),
+                      ),
+                      elevation: 4,
+                      margin: const EdgeInsets.symmetric(
+                          vertical: 8, horizontal: 16),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.person, color: Colors.green),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    call['name'],
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                if (_auth.currentUser!.uid == call['userId'])
+                                  PopupMenuButton<String>(
+                                    onSelected: (value) {
+                                      if (value == 'mark_done') {
+                                        _markCallAsDone(call);
+                                      } else if (value == 'delete') {
+                                        _deleteCall(call);
+                                      }
+                                    },
+                                    itemBuilder: (context) => [
+                                      const PopupMenuItem(
+                                        value: 'mark_done',
+                                        child: Text('تعليم كمكتمل'),
+                                      ),
+                                      const PopupMenuItem(
+                                        value: 'delete',
+                                        child: Text('حذف النداء'),
+                                      ),
+                                    ],
+                                  ),
+                              ],
+                            ),
+                            const Divider(),
+                            Row(
+                              children: [
+                                const Icon(Icons.phone, color: Colors.green),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    call['phone'],
+                                    style: const TextStyle(fontSize: 16),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                const Icon(Icons.description,
+                                    color: Colors.green),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    call['description'],
+                                    style: const TextStyle(fontSize: 16),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                const Icon(Icons.priority_high,
+                                    color: Colors.green),
+                                const SizedBox(width: 10),
+                                Text(
+                                  'درجة الاستعجال: ${call['urgency']}',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: call['urgency'] == 'مستعجل'
+                                        ? Colors.red
+                                        : call['urgency'] == 'متوسط'
+                                            ? Colors.orange
+                                            : Colors.green,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Align(
+                              alignment: Alignment.bottomRight,
+                              child: ElevatedButton.icon(
+                                onPressed: () => _viewCall(call),
+                                icon: const Icon(Icons.visibility),
+                                label: const Text('عرض التفاصيل'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  foregroundColor: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addCall,
+        backgroundColor: Colors.green,
         child: const Icon(Icons.add),
       ),
     );
@@ -249,7 +338,8 @@ class _CallDetailPageState extends State<CallDetailPage> {
 
     try {
       String userId = _auth.currentUser!.uid;
-      DatabaseReference commentsRef = _database.child('calls/$callKey/comments').push();
+      DatabaseReference commentsRef =
+          _database.child('calls/$callKey/comments').push();
       await commentsRef.set({
         'userId': userId,
         'text': text.trim(),
@@ -268,7 +358,8 @@ class _CallDetailPageState extends State<CallDetailPage> {
       DatabaseReference userRef = _database.child('users/$userId');
       DataSnapshot snapshot = await userRef.get();
       if (snapshot.exists) {
-        Map<String, dynamic> userData = Map<String, dynamic>.from(snapshot.value as Map);
+        Map<String, dynamic> userData =
+            Map<String, dynamic>.from(snapshot.value as Map);
         return userData['name'] ?? 'مستخدم مجهول';
       }
       return 'مستخدم مجهول';
@@ -278,85 +369,159 @@ class _CallDetailPageState extends State<CallDetailPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final call = widget.call;
+  @override
+Widget build(BuildContext context) {
+  final call = widget.call;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('تفاصيل النداء'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('الاسم: ${call['name']}', style: const TextStyle(fontSize: 18)),
-            const SizedBox(height: 10),
-            Text('رقم الهاتف: ${call['phone']}', style: const TextStyle(fontSize: 18)),
-            const SizedBox(height: 10),
-            Text('وصف: ${call['description']}', style: const TextStyle(fontSize: 18)),
-            const SizedBox(height: 10),
-            Text('درجة الاستعجال: ${call['urgency']}', style: const TextStyle(fontSize: 18)),
-            const SizedBox(height: 20),
-            Expanded(
-              child: StreamBuilder<DatabaseEvent>(
-                stream: _database.child('calls/${call['key']}/comments').onValue,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  if (!snapshot.hasData || snapshot.data!.snapshot.value == null) {
-                    return const Text('لا توجد تعليقات حالياً');
-                  }
+  return Scaffold(
+    appBar: AppBar(
+      title: const Text('تفاصيل النداء'),
+      backgroundColor: Colors.green,
+    ),
+    body: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15.0),
+            ),
+            elevation: 4,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.person, color: Colors.green),
+                      const SizedBox(width: 10),
+                      Text(
+                        'الاسم: ${call['name']}',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      const Icon(Icons.phone, color: Colors.green),
+                      const SizedBox(width: 10),
+                      Text(
+                        'رقم الهاتف: ${call['phone']}',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      const Icon(Icons.description, color: Colors.green),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'وصف: ${call['description']}',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      const Icon(Icons.priority_high, color: Colors.green),
+                      const SizedBox(width: 10),
+                      Text(
+                        'درجة الاستعجال: ${call['urgency']}',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: call['urgency'] == 'مستعجل'
+                              ? Colors.red
+                              : call['urgency'] == 'متوسط'
+                                  ? Colors.orange
+                                  : Colors.green,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Expanded(
+            child: StreamBuilder<DatabaseEvent>(
+              stream: _database.child('calls/${call['key']}/comments').onValue,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (!snapshot.hasData || snapshot.data!.snapshot.value == null) {
+                  return const Text('لا توجد تعليقات حالياً');
+                }
 
-                  Map<dynamic, dynamic> comments = snapshot.data!.snapshot.value as Map;
-                  List<Map<String, dynamic>> commentsList = comments.entries.map((entry) {
-                    return {'key': entry.key, ...Map<String, dynamic>.from(entry.value)};
-                  }).toList();
+                Map<dynamic, dynamic> comments =
+                    snapshot.data!.snapshot.value as Map;
+                List<Map<String, dynamic>> commentsList = comments.entries
+                    .map((entry) => {
+                          'key': entry.key,
+                          ...Map<String, dynamic>.from(entry.value)
+                        })
+                    .toList();
 
-                  return ListView.builder(
-                    itemCount: commentsList.length,
-                    itemBuilder: (context, index) {
-                      final comment = commentsList[index];
-                      return FutureBuilder<String>(
-                        future: _getUserName(comment['userId']),
-                        builder: (context, userNameSnapshot) {
-                          String userName = userNameSnapshot.data ?? 'مستخدم مجهول';
-                          return Card(
-                            margin: const EdgeInsets.symmetric(vertical: 8),
-                            child: ListTile(
-                              title: Text(comment['text']),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('بواسطة: $userName'),
-                                  Text('تاريخ: ${comment['timestamp']}'),
-                                ],
-                              ),
+                return ListView.builder(
+                  itemCount: commentsList.length,
+                  itemBuilder: (context, index) {
+                    final comment = commentsList[index];
+                    return FutureBuilder<String>(
+                      future: _getUserName(comment['userId']),
+                      builder: (context, userNameSnapshot) {
+                        String userName = userNameSnapshot.data ?? 'مستخدم مجهول';
+                        return Card(
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          child: ListTile(
+                            title: Text(comment['text']),
+                            subtitle: Text(
+                              'بواسطة: $userName',
+                              style: const TextStyle(fontSize: 12),
                             ),
-                          );
-                        },
-                      );
-                    },
-                  );
-                },
-              ),
+                            trailing: Text(
+                              comment['timestamp'].substring(0, 10),
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                );
+              },
             ),
-            TextField(
-              controller: _commentController,
-              decoration: const InputDecoration(
-                labelText: 'إضافة تعليق',
-                border: OutlineInputBorder(),
-              ),
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: _commentController,
+            decoration: const InputDecoration(
+              labelText: 'إضافة تعليق',
+              border: OutlineInputBorder(),
             ),
-            const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: () => _addComment(call['key'], _commentController.text),
-              child: const Text('إرسال التعليق'),
+          ),
+          const SizedBox(height: 10),
+          ElevatedButton(
+            onPressed: () => _addComment(call['key'], _commentController.text),
+            child: const Text('إرسال التعليق'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 }

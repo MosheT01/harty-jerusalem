@@ -82,7 +82,8 @@ class _HomePageState extends State<HomePage> {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const ProfilePage()),
+                    MaterialPageRoute(
+                        builder: (context) => const ProfilePage()),
                   );
                 },
               ),
@@ -113,31 +114,31 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: sections.asMap().entries.map((entry) {
-            int index = entry.key;
-            String section = entry.value;
-            return GestureDetector(
-              onTap: () {
-                setState(() {
-                  _currentIndex = index;
-                });
-                _pageController.jumpToPage(index);
-              },
-              child: Text(
-                section,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  decoration: _currentIndex == index
-                      ? TextDecoration.underline
-                      : TextDecoration.none,
-                ),
-              ),
-            );
-          }).toList(),
-        ),
+        // title: Row(
+        //   mainAxisAlignment: MainAxisAlignment.spaceAround,
+        //   children: sections.asMap().entries.map((entry) {
+        //     int index = entry.key;
+        //     String section = entry.value;
+        //     return GestureDetector(
+        //       onTap: () {
+        //         setState(() {
+        //           _currentIndex = index;
+        //         });
+        //         _pageController.jumpToPage(index);
+        //       },
+        //       child: Text(
+        //         section,
+        //         style: TextStyle(
+        //           fontSize: 18,
+        //           fontWeight: FontWeight.bold,
+        //           decoration: _currentIndex == index
+        //               ? TextDecoration.underline
+        //               : TextDecoration.none,
+        //         ),
+        //       ),
+        //     );
+        //   }).toList(),
+        // ),
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.menu),
