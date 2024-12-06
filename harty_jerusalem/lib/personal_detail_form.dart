@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:dropdown_search/dropdown_search.dart';
+import 'package:geolocator/geolocator.dart';
 
 class PersonalDetailsForm extends StatefulWidget {
   const PersonalDetailsForm({Key? key}) : super(key: key);
@@ -37,6 +38,65 @@ class _PersonalDetailsFormState extends State<PersonalDetailsForm> {
     idNumberController.dispose();
     addressController.dispose();
     super.dispose();
+  }
+
+  Future<void> _checkLocationPermission() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    // Check if location services are enabled
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      await Geolocator.openLocationSettings();
+      return;
+    }
+
+    // Check location permissions
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('تم رفض إذن الوصول إلى الموقع.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('تم رفض إذن الموقع دائمًا.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+  }
+
+  Future<void> _getCurrentLocation() async {
+    try {
+      await _checkLocationPermission();
+
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      setState(() {
+        addressController.text =
+            'Latitude: ${position.latitude}, Longitude: ${position.longitude}';
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('فشل في الحصول على الموقع: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Future<void> _submitDetails() async {
@@ -81,54 +141,6 @@ class _PersonalDetailsFormState extends State<PersonalDetailsForm> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Preview card
-            Card(
-              color: Colors.teal[50],
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  children: [
-                    const CircleAvatar(
-                      radius: 30,
-                      backgroundColor: Colors.teal,
-                      child: Icon(Icons.person, color: Colors.white, size: 30),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '${firstNameController.text} ${lastNameController.text}',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                              color: Colors.teal,
-                            ),
-                          ),
-                          Text(
-                            addressController.text.isNotEmpty
-                                ? 'العنوان: ${addressController.text}'
-                                : 'العنوان: ---',
-                            style: const TextStyle(color: Colors.black54),
-                          ),
-                          Text(
-                            selectedOccupation != null
-                                ? 'الوظيفة: $selectedOccupation'
-                                : 'الوظيفة: ---',
-                            style: const TextStyle(color: Colors.black54),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
             // Form
             Form(
               key: _formKey,
@@ -143,7 +155,6 @@ class _PersonalDetailsFormState extends State<PersonalDetailsForm> {
                         filled: true,
                         fillColor: Colors.white,
                       ),
-                      onChanged: (_) => setState(() {}),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'يرجى إدخال الاسم الأول';
@@ -161,7 +172,6 @@ class _PersonalDetailsFormState extends State<PersonalDetailsForm> {
                         filled: true,
                         fillColor: Colors.white,
                       ),
-                      onChanged: (_) => setState(() {}),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'يرجى إدخال الاسم الأخير';
@@ -179,7 +189,6 @@ class _PersonalDetailsFormState extends State<PersonalDetailsForm> {
                         filled: true,
                         fillColor: Colors.white,
                       ),
-                      onChanged: (_) => setState(() {}),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'يرجى إدخال رقم الهوية';
@@ -197,34 +206,17 @@ class _PersonalDetailsFormState extends State<PersonalDetailsForm> {
                         filled: true,
                         fillColor: Colors.white,
                       ),
-                      onChanged: (_) => setState(() {}),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'يرجى إدخال العنوان';
-                        }
-                        return null;
-                      },
-                      autofillHints: const [AutofillHints.fullStreetAddress],
+                      readOnly: true,
+                      onTap: _getCurrentLocation,
                     ),
                     const SizedBox(height: 16),
-                    // Occupation DropdownSearch
                     DropdownSearch<String>(
                       key: dropDownKey,
                       selectedItem: 'اختر الوظيفة',
                       items: (f, cs) => occupationList,
                       popupProps: PopupProps.menu(
-                        disabledItemFn: (item) => item == '👨‍🍳 طاهٍ',
                         fit: FlexFit.loose,
                         showSearchBox: true,
-                        searchDelay: const Duration(milliseconds: 0),
-                      ),
-                      decoratorProps: const DropDownDecoratorProps(
-                        decoration: InputDecoration(
-                          labelText: 'الوظيفة',
-                          border: OutlineInputBorder(),
-                          filled: true,
-                          fillColor: Colors.white,
-                        ),
                       ),
                       onChanged: (value) {
                         setState(() {
@@ -232,9 +224,7 @@ class _PersonalDetailsFormState extends State<PersonalDetailsForm> {
                         });
                       },
                       validator: (value) {
-                        if (value == null ||
-                            value.isEmpty ||
-                            value == 'اختر الوظيفة') {
+                        if (value == null || value.isEmpty) {
                           return 'يرجى اختيار الوظيفة';
                         }
                         return null;
