@@ -129,6 +129,7 @@ class _LoginPageState extends State<LoginPage> {
                         const SizedBox(height: 16),
                         TextFormField(
                           controller: passwordController,
+                          textDirection: TextDirection.ltr,
                           obscureText: _obscureText,
                           decoration: InputDecoration(
                             labelText: 'كلمة المرور',

@@ -17,7 +17,8 @@ class _PersonalDetailsFormState extends State<PersonalDetailsForm> {
   final TextEditingController idNumberController = TextEditingController();
   final TextEditingController phoneNumberController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
-  final dropDownKey = GlobalKey<DropdownSearchState>();
+  final GlobalKey<DropdownSearchState<String>> dropDownKey =
+      GlobalKey<DropdownSearchState<String>>();
   String? selectedOccupation;
 
   final List<String> occupationList = [
@@ -299,7 +300,20 @@ class _PersonalDetailsFormState extends State<PersonalDetailsForm> {
                         fillColor: Colors.white,
                       ),
                       readOnly: true,
-                      onTap: _getCurrentLocation,
+                      onTap: () async {
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (BuildContext context) {
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          },
+                        );
+                        await _getCurrentLocation();
+                        Navigator.of(context).pop();
+                        setState(() {});
+                      },
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'يرجى تحديد العنوان';
@@ -311,7 +325,7 @@ class _PersonalDetailsFormState extends State<PersonalDetailsForm> {
                     // Occupation DropdownSearch
                     DropdownSearch<String>(
                       key: dropDownKey,
-                      selectedItem: 'اختر الوظيفة',
+                      selectedItem: null,
                       items: (f, cs) => occupationList,
                       popupProps: PopupProps.menu(
                         disabledItemFn: (item) => item == '👨‍🍳 طاهٍ',
