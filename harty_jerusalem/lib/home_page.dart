@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'nidaa_page.dart';
 import 'profile_page.dart';
 import 'newsfeed_page.dart';
 import 'events_page.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'login_screen.dart';
 
 class HomePage extends StatefulWidget {
@@ -24,6 +24,27 @@ class _HomePageState extends State<HomePage> {
     "أخبار حارتي",
     "نداء",
     "أحداث",
+  ];
+
+  final List<BottomNavigationBarItem> _navBarItems = const [
+    BottomNavigationBarItem(
+      icon: Icon(Icons.newspaper),
+      label: "أخبار حارتي",
+    ),
+    BottomNavigationBarItem(
+      icon: Icon(Icons.campaign),
+      label: "نداء",
+    ),
+    BottomNavigationBarItem(
+      icon: Icon(Icons.event),
+      label: "أحداث",
+    ),
+  ];
+
+  final List<Widget> _pages = [
+    const NewsfeedPage(),
+    const NidaaPage(),
+    const EventsPage(),
   ];
 
   void _logout() async {
@@ -81,7 +102,14 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -102,7 +130,9 @@ class _HomePageState extends State<HomePage> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  decoration: _currentIndex == index ? TextDecoration.underline : TextDecoration.none,
+                  decoration: _currentIndex == index
+                      ? TextDecoration.underline
+                      : TextDecoration.none,
                 ),
               ),
             );
@@ -121,198 +151,35 @@ class _HomePageState extends State<HomePage> {
             _currentIndex = index;
           });
         },
-        children: [
-          NewsfeedPage(),
-          NidaaPage(),
-          EventsPage(),
-        ],
+        children: _pages,
       ),
-    );
-  }
-}
-
-class NewsfeedPage extends StatefulWidget {
-  const NewsfeedPage({super.key});
-
-  @override
-  _NewsfeedPageState createState() => _NewsfeedPageState();
-}
-
-class _NewsfeedPageState extends State<NewsfeedPage> {
-  final List<Map<String, dynamic>> posts = [];
-  File? _selectedImage;
-  String postContent = '';
-
-  void _addPost() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15.0),
-              ),
-              title: const Text(
-                'إضافة منشور جديد',
-                textAlign: TextAlign.right,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green,
-                ),
-              ),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    TextField(
-                      textAlign: TextAlign.right,
-                      decoration: InputDecoration(
-                        labelText: 'محتوى المنشور',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10.0),
-                        ),
-                      ),
-                      maxLines: 3,
-                      keyboardType: TextInputType.multiline,
-                      textDirection: TextDirection.rtl,
-                      onChanged: (value) {
-                        setDialogState(() {
-                          postContent = value;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 10),
-                    ElevatedButton.icon(
-                      onPressed: () async {
-                        final ImagePicker picker = ImagePicker();
-                        final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-                        if (pickedFile != null) {
-                          setDialogState(() {
-                            _selectedImage = File(pickedFile.path);
-                          });
-                        }
-                      },
-                      icon: const Icon(Icons.image),
-                      label: const Text('إضافة صورة من المعرض'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10.0),
-                        ),
-                      ),
-                    ),
-                    if (_selectedImage != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 10),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(10.0),
-                          child: Image.file(
-                            _selectedImage!,
-                            height: 100,
-                            width: 100,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('إلغاء', textAlign: TextAlign.center),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    if (postContent.trim().isEmpty && _selectedImage == null) {
-                      return;
-                    }
-                    setState(() {
-                      posts.add({
-                        'content': postContent,
-                        'image': _selectedImage,
-                      });
-                      _selectedImage = null;
-                      postContent = '';
-                    });
-                    Navigator.of(context).pop();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                  ),
-                  child: const Text('إضافة', textAlign: TextAlign.center),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: posts.isEmpty
-          ? const Center(
-              child: Text(
-                'لا توجد منشورات حالياً',
-                style: TextStyle(fontSize: 18, color: Colors.grey),
-                textAlign: TextAlign.center,
-              ),
-            )
-          : ListView.builder(
-              itemCount: posts.length,
-              itemBuilder: (context, index) {
-                final post = posts[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15.0),
-                  ),
-                  elevation: 5,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (post['image'] != null)
-                        ClipRRect(
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(15.0)),
-                          child: Image.file(
-                            post['image'],
-                            width: double.infinity,
-                            height: 250,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Text(
-                          post['content'] ?? '',
-                          textAlign: TextAlign.right,
-                          style: const TextStyle(
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.primary,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, -2),
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _addPost,
-        child: const Icon(Icons.add),
-        backgroundColor: Colors.green,
+          ],
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+            _pageController.jumpToPage(index);
+          },
+          backgroundColor: theme.colorScheme.primary,
+          selectedItemColor: theme.colorScheme.onPrimary,
+          unselectedItemColor: theme.colorScheme.onPrimary.withOpacity(0.6),
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
+          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal),
+          type: BottomNavigationBarType.fixed,
+          items: _navBarItems,
+        ),
       ),
     );
   }
