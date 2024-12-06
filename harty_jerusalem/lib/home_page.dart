@@ -30,9 +30,9 @@ class _HomePageState extends State<HomePage> {
   ];
 
   final List<Widget> _pages = [
-    NewsfeedPage(),
-    NidaaPage(),
-    EventsPage(),
+    const NewsfeedPage(),
+    const NidaaPage(),
+    const EventsPage(),
   ];
 
   @override
