@@ -115,146 +115,164 @@ class _NewsfeedPageState extends State<NewsfeedPage> {
     final userData = Map<String, dynamic>.from(userSnapshot.value as Map);
     final userAddress = userData['address'] ?? 'عنوان غير متوفر';
 
+    bool isUploading = false; // New state variable
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15.0),
-          ),
-          title: const Text(
-            'إضافة منشور جديد',
-            textAlign: TextAlign.right,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.green,
-            ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15.0),
+              ),
+              title: const Text(
+                'إضافة منشور جديد',
                 textAlign: TextAlign.right,
-                decoration: InputDecoration(
-                  labelText: 'محتوى المنشور',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                ),
-                maxLines: 3,
-                keyboardType: TextInputType.multiline,
-                textDirection: TextDirection.rtl,
-                onChanged: (value) {
-                  postContent = value;
-                },
-              ),
-              const SizedBox(height: 10),
-              ElevatedButton.icon(
-                onPressed: _pickImage,
-                icon: const Icon(Icons.photo_library),
-                label: const Text('اختر صورة'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey[300],
-                  foregroundColor: Colors.black,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green,
                 ),
               ),
-              if (selectedImage != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 10),
-                  child: Image.file(
-                    selectedImage!,
-                    height: 100,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                setState(() {
-                  selectedImage = null;
-                });
-              },
-              child: const Text('إلغاء', textAlign: TextAlign.center),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                try {
-                  if (postContent.trim().isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('يرجى كتابة محتوى المنشور'),
-                        backgroundColor: Colors.red,
+              content: isUploading
+                  ? const Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 10),
+                          Text('جاري رفع المنشور...')
+                        ],
                       ),
-                    );
-                    return;
-                  }
-
-                  setState(() {
-                    isLoading = true;
-                  });
-
-                  final postKey = postsRef.push().key;
-                  if (postKey == null) {
-                    throw 'تعذر إنشاء مفتاح المنشور';
-                  }
-
-                  String? imageUrl;
-                  if (selectedImage != null) {
-                    imageUrl = await _uploadImage(postKey);
-                  }
-
-                  await postsRef.child(postKey).set({
-                    'content': postContent,
-                    'authorId': currentUser.uid,
-                    'authorName':
-                        '${userData['firstName']} ${userData['lastName']}',
-                    'authorAddress': userAddress,
-                    'likes': [],
-                    'dislikes': [],
-                    'comments': [],
-                    'imageUrl': imageUrl,
-                    'timestamp': DateTime.now().toIso8601String(),
-                  });
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('تم إضافة المنشور بنجاح!'),
-                      backgroundColor: Colors.green,
+                    )
+                  : Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextField(
+                          textAlign: TextAlign.right,
+                          decoration: InputDecoration(
+                            labelText: 'محتوى المنشور',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                            ),
+                          ),
+                          maxLines: 3,
+                          keyboardType: TextInputType.multiline,
+                          textDirection: TextDirection.rtl,
+                          onChanged: (value) {
+                            postContent = value;
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        ElevatedButton.icon(
+                          onPressed: _pickImage,
+                          icon: const Icon(Icons.photo_library),
+                          label: const Text('اختر صورة'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.grey[300],
+                            foregroundColor: Colors.black,
+                          ),
+                        ),
+                        if (selectedImage != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 10),
+                            child: Image.file(
+                              selectedImage!,
+                              height: 100,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                      ],
                     ),
-                  );
+              actions: isUploading
+                  ? []
+                  : [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          setState(() {
+                            selectedImage = null;
+                          });
+                        },
+                        child: const Text('إلغاء', textAlign: TextAlign.center),
+                      ),
+                      ElevatedButton(
+                        onPressed: () async {
+                          try {
+                            if (postContent.trim().isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('يرجى كتابة محتوى المنشور'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                              return;
+                            }
 
-                  setState(() {
-                    postContent = '';
-                    selectedImage = null;
-                    isLoading = false;
-                  });
-                  Navigator.of(context).pop();
-                } catch (e) {
-                  setState(() {
-                    isLoading = false;
-                  });
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('حدث خطأ أثناء الإضافة: $e'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10.0),
-                ),
-              ),
-              child: const Text('إضافة', textAlign: TextAlign.center),
-            ),
-          ],
+                            setState(() {
+                              isUploading = true; // Start uploading
+                            });
+
+                            final postKey = postsRef.push().key;
+                            if (postKey == null) {
+                              throw 'تعذر إنشاء مفتاح المنشور';
+                            }
+
+                            String? imageUrl;
+                            if (selectedImage != null) {
+                              imageUrl = await _uploadImage(postKey);
+                            }
+
+                            await postsRef.child(postKey).set({
+                              'content': postContent,
+                              'authorId': currentUser.uid,
+                              'authorName':
+                                  '${userData['firstName']} ${userData['lastName']}',
+                              'authorAddress': userAddress,
+                              'likes': [],
+                              'dislikes': [],
+                              'comments': [],
+                              'imageUrl': imageUrl,
+                              'timestamp': DateTime.now().toIso8601String(),
+                            });
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('تم إضافة المنشور بنجاح!'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+
+                            setState(() {
+                              postContent = '';
+                              selectedImage = null;
+                            });
+                            Navigator.of(context).pop();
+                          } catch (e) {
+                            setState(() {
+                              isUploading = false; // Stop uploading
+                            });
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('حدث خطأ أثناء الإضافة: $e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.0),
+                          ),
+                        ),
+                        child: const Text('إضافة', textAlign: TextAlign.center),
+                      ),
+                    ],
+            );
+          },
         );
       },
     );
