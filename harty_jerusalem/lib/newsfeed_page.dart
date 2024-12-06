@@ -1,6 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class NewsfeedPage extends StatefulWidget {
   const NewsfeedPage({super.key});
@@ -12,8 +15,10 @@ class NewsfeedPage extends StatefulWidget {
 class _NewsfeedPageState extends State<NewsfeedPage> {
   final DatabaseReference postsRef = FirebaseDatabase.instance.ref('posts');
   final DatabaseReference usersRef = FirebaseDatabase.instance.ref('users');
+  final FirebaseStorage storage = FirebaseStorage.instance;
   final List<Map<String, dynamic>> posts = [];
   String postContent = '';
+  File? selectedImage;
   bool isLoading = true;
 
   @override
@@ -54,9 +59,47 @@ class _NewsfeedPageState extends State<NewsfeedPage> {
     });
   }
 
+  Future<void> _pickImage() async {
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        selectedImage = File(pickedFile.path);
+      });
+    }
+  }
+
+  Future<String?> _uploadImage(String postId) async {
+    if (selectedImage == null) return null;
+
+    try {
+      final ref = storage.ref().child('post_images/$postId.jpg');
+      await ref.putFile(selectedImage!);
+      final downloadUrl = await ref.getDownloadURL();
+
+      return downloadUrl;
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('فشل تحميل الصورة: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return null;
+    }
+  }
+
   Future<void> _addPost() async {
     final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) return;
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('لم يتم تسجيل الدخول'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
     final userSnapshot = await usersRef.child(currentUser.uid).get();
     if (!userSnapshot.exists) {
@@ -88,35 +131,82 @@ class _NewsfeedPageState extends State<NewsfeedPage> {
               color: Colors.green,
             ),
           ),
-          content: TextField(
-            textAlign: TextAlign.right,
-            decoration: InputDecoration(
-              labelText: 'محتوى المنشور',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10.0),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                textAlign: TextAlign.right,
+                decoration: InputDecoration(
+                  labelText: 'محتوى المنشور',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                ),
+                maxLines: 3,
+                keyboardType: TextInputType.multiline,
+                textDirection: TextDirection.rtl,
+                onChanged: (value) {
+                  postContent = value;
+                },
               ),
-            ),
-            maxLines: 3,
-            keyboardType: TextInputType.multiline,
-            textDirection: TextDirection.rtl,
-            onChanged: (value) {
-              postContent = value;
-            },
+              const SizedBox(height: 10),
+              ElevatedButton.icon(
+                onPressed: _pickImage,
+                icon: const Icon(Icons.photo_library),
+                label: const Text('اختر صورة'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.grey[300],
+                  foregroundColor: Colors.black,
+                ),
+              ),
+              if (selectedImage != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: Image.file(
+                    selectedImage!,
+                    height: 100,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+            ],
           ),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
+                setState(() {
+                  selectedImage = null;
+                });
               },
               child: const Text('إلغاء', textAlign: TextAlign.center),
             ),
             ElevatedButton(
               onPressed: () async {
-                if (postContent.trim().isEmpty) {
-                  return;
-                }
-                final postKey = postsRef.push().key;
-                if (postKey != null) {
+                try {
+                  if (postContent.trim().isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('يرجى كتابة محتوى المنشور'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
+
+                  setState(() {
+                    isLoading = true;
+                  });
+
+                  final postKey = postsRef.push().key;
+                  if (postKey == null) {
+                    throw 'تعذر إنشاء مفتاح المنشور';
+                  }
+
+                  String? imageUrl;
+                  if (selectedImage != null) {
+                    imageUrl = await _uploadImage(postKey);
+                  }
+
                   await postsRef.child(postKey).set({
                     'content': postContent,
                     'authorId': currentUser.uid,
@@ -126,12 +216,33 @@ class _NewsfeedPageState extends State<NewsfeedPage> {
                     'likes': [],
                     'dislikes': [],
                     'comments': [],
+                    'imageUrl': imageUrl,
                     'timestamp': DateTime.now().toIso8601String(),
                   });
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('تم إضافة المنشور بنجاح!'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+
                   setState(() {
                     postContent = '';
+                    selectedImage = null;
+                    isLoading = false;
                   });
                   Navigator.of(context).pop();
+                } catch (e) {
+                  setState(() {
+                    isLoading = false;
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('حدث خطأ أثناء الإضافة: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
                 }
               },
               style: ElevatedButton.styleFrom(
@@ -283,6 +394,7 @@ class _NewsfeedPageState extends State<NewsfeedPage> {
                   itemCount: posts.length,
                   itemBuilder: (context, index) {
                     final post = posts[index];
+                    final imageUrl = post['imageUrl'] as String?;
                     final likes = List<String>.from(post['likes'] ?? []);
                     final dislikes = List<String>.from(post['dislikes'] ?? []);
                     final comments =
@@ -322,7 +434,11 @@ class _NewsfeedPageState extends State<NewsfeedPage> {
                                           ),
                                         ),
                                         Text(
-                                          post['authorAddress'],
+                                          DateTime.parse(post['timestamp'])
+                                              .toLocal()
+                                              .toString()
+                                              .substring(0, 16)
+                                              .replaceFirst('T', ' '),
                                           style: const TextStyle(
                                             fontSize: 12,
                                             color: Colors.grey,
@@ -333,6 +449,67 @@ class _NewsfeedPageState extends State<NewsfeedPage> {
                                   ],
                                 ),
                                 const SizedBox(height: 8),
+                                if (imageUrl != null)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 8.0),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(
+                                          15.0), // Rounded corners
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          // Open full-screen image view
+                                          showDialog(
+                                            context: context,
+                                            builder: (context) {
+                                              return Dialog(
+                                                child: InteractiveViewer(
+                                                  child: Image.network(
+                                                    imageUrl,
+                                                    fit: BoxFit.contain,
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          );
+                                        },
+                                        child: Image.network(
+                                          imageUrl,
+                                          height: 200, // Adjusted height
+                                          width: double.infinity,
+                                          fit: BoxFit.cover,
+                                          loadingBuilder: (context, child,
+                                              loadingProgress) {
+                                            if (loadingProgress == null)
+                                              return child;
+                                            return Center(
+                                              child: CircularProgressIndicator(
+                                                value: loadingProgress
+                                                            .expectedTotalBytes !=
+                                                        null
+                                                    ? loadingProgress
+                                                            .cumulativeBytesLoaded /
+                                                        (loadingProgress
+                                                                .expectedTotalBytes ??
+                                                            1)
+                                                    : null,
+                                              ),
+                                            );
+                                          },
+                                          errorBuilder:
+                                              (context, error, stackTrace) {
+                                            return const Center(
+                                              child: Text(
+                                                'فشل تحميل الصورة',
+                                                style: TextStyle(
+                                                    color: Colors.red),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 Text(
                                   post['content'] ?? '',
                                   textAlign: TextAlign.right,
