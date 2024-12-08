@@ -1,16 +1,53 @@
-# harty_jerusalem
+# HARTY - Enhancing Neighborhood Connectivity
 
-A new Flutter project.
+---
 
-## Getting Started
+## 🚀 About HARTY
+HARTY is a mobile application designed to strengthen neighborhood connections by fostering collaboration, resource sharing, and community-building initiatives. The app was conceptualized and developed during **Hackathon Einar 2024**, where it won **2nd place** 🥈 among 12 teams.
 
-This project is a starting point for a Flutter application.
+---
 
-A few resources to get you started if this is your first Flutter project:
+## 🏆 Achievements
+- **2nd Place** at Hackathon Einar 2024
+- **Cash Prize:** 2,000 Shekels
+- **Future Growth Funding:** 10,000 Shekels in services from SigmaLabs
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+---
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 🛠️ Tech Stack
+- **Frontend:** Flutter
+- **Backend:** Firebase (Authentication, Realtime Database, Storage)
+- **Platforms:** Android, Web
+
+---
+
+## 👨‍💻 Team
+- **Samer Neiroukh**
+- **Mohammad Farrah**
+- **Muneer Asileh**
+- **Mousa Tams**
+
+---
+
+## 🙌 Acknowledgments
+Special thanks to:
+- **SigmaLabs**
+- **Friedrich Naumann Foundation for Freedom**
+- **Einar JYC**
+
+Your support made this project and experience possible!
+
+---
+
+## 📢 Contact
+For inquiries about collaboration or licensing, please contact:
+- **Mousa Tams**
+- **mousatams@hotmail.com**
+
+---
+
+## ⚖️ Legal Notice
+This project, including its source code, design, and associated materials, is the exclusive property of **Mousa Tams**. 
+
+Unauthorized use, reproduction, distribution, or modification of this project is strictly prohibited. Violators will be subject to legal action.
+
